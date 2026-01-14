@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linsen - Connect with Talent</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+      body { background-color: #f9fafb; }
+      /* Hide content until React loads */
+      #root:empty { display: none; }
+    </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+      }
+    }
+    </script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+          User, Briefcase, Calendar, Clock, CheckCircle, XCircle, Search, 
+          Menu, X, ChevronRight, Star, DollarSign, ArrowRight, LogOut, 
+          MapPin, Filter, Coffee, Building2, Linkedin 
+        } from 'lucide-react';
+
+        // --- MOCK DATA ---
+        const AVATAR_EDO = "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&facialHair=beardMedium&hairColor=black&skinColor=light&top=shortFlat";
+        const AVATAR_MORTEN = "https://api.dicebear.com/7.x/avataaars/svg?seed=Morten&top=noHair&skinColor=pale&facialHair=beardLight&clothing=blazerAndShirt";
+        const AVATAR_FELIX = "https://api.dicebear.com/7.x/avataaars/svg?seed=FelixStorm";
+
+        const MOCK_PROFESSIONALS = [
+          {
+            id: 1,
+            name: "Felix Storm",
+            company: "Spotify",
+            role: "Senior UX Designer",
+            rate: 85,
+            rating: 4.9,
+            location: "Stockholm, SE",
+            skills: ["Portfolio Review", "Interview Prep", "Culture Fit"],
+            bio: "I've interviewed over 100 candidates at Spotify. I can help you polish your portfolio and tell you exactly what we look for in design challenges.",
+            avatar: AVATAR_FELIX
+          },
+          {
+            id: 5,
+            name: "Edo Linari",
+            company: "Linsen",
+            role: "Founder & CEO",
+            rate: 250,
+            rating: 5.0,
+            location: "Copenhagen, DK",
+            skills: ["Startup Advice", "Pitch Deck Review", "Vision Strategy"],
+            bio: "As the founder of Linsen, I want to help the next generation of talent connect with opportunities. Let's discuss your career vision or startup idea.",
+            avatar: AVATAR_EDO
+          },
+          {
+            id: 2,
+            name: "David Chen",
+            company: "Google",
+            role: "Staff Software Engineer",
+            rate: 120,
+            rating: 5.0,
+            location: "Copenhagen, DK",
+            skills: ["System Design", "Coding Interviews", "Career Growth"],
+            bio: "Navigating big tech hiring processes is tough. Let's practice LeetCode patterns and discuss how to ace the system design round.",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David"
+          },
+          {
+            id: 3,
+            name: "Elena Rodriguez",
+            company: "Novo Nordisk",
+            role: "Product Strategy Lead",
+            rate: 95,
+            rating: 4.8,
+            location: "Remote / London",
+            skills: ["Resume Critique", "Case Studies", "Salary Negotiation"],
+            bio: "Transitioning into Product Management? I'll review your CV and help you frame your past experience to fit the PM mindset.",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Elena"
+          },
+          {
+            id: 4,
+            name: "Marcus Johnson",
+            company: "LEGO Group",
+            role: "Marketing Manager",
+            rate: 70,
+            rating: 4.7,
+            location: "Billund, DK",
+            skills: ["Brand Strategy", "Networking", "Cover Letters"],
+            bio: "Helping marketers break into the toy and entertainment industry. Let's chat about building a personal brand that stands out.",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus"
+          }
+        ];
+
+        const INITIAL_REQUESTS = [
+          {
+            id: 101,
+            candidateName: "Morten Haulik",
+            candidateAvatar: AVATAR_MORTEN,
+            targetRole: "Junior Designer",
+            date: "2024-03-25",
+            time: "14:00",
+            status: "pending", 
+            message: "Hi Edo! I see you founded Linsen. I have a startup idea in the HR space and would love your feedback on my pitch."
+          },
+          {
+            id: 102,
+            candidateName: "Sarah Miller",
+            candidateAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SarahMiller",
+            targetRole: "Product Owner",
+            date: "2024-03-28",
+            time: "10:00",
+            status: "accepted",
+            message: "Looking for advice on transitioning from project management to product ownership."
+          }
+        ];
+
+        // --- COMPONENTS ---
+
+        const Button = ({ children, variant = 'primary', className = '', onClick, icon: Icon, disabled }) => {
+          const baseStyles = "inline-flex items-center justify-center px-5 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+          
+          const variants = {
+            primary: "bg-blue-800 text-white hover:bg-blue-900 focus:ring-blue-700 shadow-md hover:shadow-lg",
+            secondary: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 focus:ring-gray-200 shadow-sm",
+            outline: "bg-transparent text-blue-800 border border-blue-800 hover:bg-blue-50",
+            danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-transparent",
+            ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
+          };
+
+          return (
+            <button 
+              className={`${baseStyles} ${variants[variant]} ${className}`}
+              onClick={onClick}
+              disabled={disabled}
+            >
+              {Icon && <Icon size={18} className="mr-2" />}
+              {children}
+            </button>
+          );
+        };
+
+        const Card = ({ children, className = '' }) => (
+          <div className={`bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 ${className}`}>
+            {children}
+          </div>
+        );
+
+        const Badge = ({ status }) => {
+          const styles = {
+            pending: "bg-amber-100 text-amber-800 border-amber-200",
+            accepted: "bg-emerald-100 text-emerald-800 border-emerald-200",
+            rescheduling: "bg-blue-100 text-blue-800 border-blue-200",
+            rejected: "bg-red-100 text-red-800 border-red-200"
+          };
+          
+          const labels = {
+            pending: "New Request",
+            accepted: "Meeting Confirmed",
+            rescheduling: "Proposal Sent",
+            rejected: "Declined"
+          };
+
+          return (
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status] || styles.pending}`}>
+              {labels[status]}
+            </span>
+          );
+        };
+
+        // --- MAIN APP COMPONENT ---
+
+        function App() {
+          const [view, setView] = useState('landing'); 
+          const [userRole, setUserRole] = useState(null); 
+          const [selectedProfessional, setSelectedProfessional] = useState(null);
+          
+          const [showBookingModal, setShowBookingModal] = useState(false);
+          const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+          const [showSignUpModal, setShowSignUpModal] = useState(false);
+          
+          const [activeRequest, setActiveRequest] = useState(null);
+          const [requests, setRequests] = useState(INITIAL_REQUESTS);
+          const [toast, setToast] = useState(null);
+
+          const [bookingDate, setBookingDate] = useState("");
+          const [bookingTime, setBookingTime] = useState("");
+          const [rescheduleDate, setRescheduleDate] = useState("");
+          const [rescheduleTime, setRescheduleTime] = useState("");
+          
+          const [signUpRole, setSignUpRole] = useState('candidate'); 
+
+          const handleLogin = (role) => {
+            setUserRole(role);
+            if (role === 'candidate') {
+              setView('candidate-browse');
+            } else {
+              setView('professional-dashboard');
+            }
+          };
+
+          const handleLogout = () => {
+            setUserRole(null);
+            setView('landing');
+            setSelectedProfessional(null);
+          };
+          
+          const handleSignUp = () => {
+            setShowSignUpModal(false);
+            handleLogin(signUpRole);
+            showToast(`Welcome! Your ${signUpRole} account has been created.`);
+          };
+
+          const showToast = (message, type = 'success') => {
+            setToast({ message, type });
+            setTimeout(() => setToast(null), 3000);
+          };
+
+          const handleBookMeeting = () => {
+            if (!bookingDate || !bookingTime) {
+              showToast("Please select a date and time", "error");
+              return;
+            }
+            setTimeout(() => {
+              setShowBookingModal(false);
+              setSelectedProfessional(null);
+              setBookingDate("");
+              setBookingTime("");
+              showToast("Booking request sent! Edo will review shortly.");
+            }, 800);
+          };
+
+          const handleAcceptRequest = (id) => {
+            setRequests(requests.map(req => 
+              req.id === id ? { ...req, status: 'accepted' } : req
+            ));
+            showToast("Meeting confirmed! Added to your calendar.");
+          };
+
+          const openRescheduleModal = (request) => {
+            setActiveRequest(request);
+            setRescheduleDate(request.date);
+            setRescheduleTime(request.time);
+            setShowRescheduleModal(true);
+          };
+
+          const handleSubmitReschedule = () => {
+            setRequests(requests.map(req => 
+              req.id === activeRequest.id ? { 
+                ...req, 
+                status: 'rescheduling', 
+                date: rescheduleDate, 
+                time: rescheduleTime 
+              } : req
+            ));
+            setShowRescheduleModal(false);
+            showToast("New time proposed to the candidate.");
+          };
+
+          // --- VIEWS ---
+
+          const LandingView = () => (
+            <div className="flex flex-col min-h-screen bg-white relative overflow-hidden">
+              <div className="absolute bottom-0 left-0 w-full h-[45vh] pointer-events-none z-0 overflow-hidden flex items-end">
+                 <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <path fill="rgba(30, 58, 138, 0.03)" fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                      <animate attributeName="d" dur="10s" repeatCount="indefinite" values="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,192L48,186.7C96,181,192,171,288,181.3C384,192,480,224,576,218.7C672,213,768,171,864,160C960,149,1056,171,1152,192C1248,213,1344,235,1392,245.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+                    </path>
+                    <path fill="rgba(30, 58, 138, 0.06)" fillOpacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                       <animate attributeName="d" dur="15s" repeatCount="indefinite" values="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,256L48,245.3C96,235,192,213,288,202.7C384,192,480,192,576,202.7C672,213,768,235,864,229.3C960,224,1056,192,1152,186.7C1248,181,1344,203,1392,213.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+                    </path>
+                    <path fill="rgba(30, 58, 138, 0.1)" fillOpacity="1" d="M0,256L48,261.3C96,267,192,277,288,266.7C384,256,480,224,576,218.7C672,213,768,235,864,245.3C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                       <animate attributeName="d" dur="12s" repeatCount="indefinite" values="M0,256L48,261.3C96,267,192,277,288,266.7C384,256,480,224,576,218.7C672,213,768,235,864,245.3C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,288L48,272C96,256,192,224,288,218.7C384,213,480,235,576,245.3C672,256,768,256,864,250.7C960,245,1056,235,1152,240C1248,245,1344,267,1392,277.3L1440,288L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,256L48,261.3C96,267,192,277,288,266.7C384,256,480,224,576,218.7C672,213,768,235,864,245.3C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+                    </path>
+                 </svg>
+              </div>
+
+              <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto w-full">
+                <div className="flex items-center gap-2">
+                   <img src="Linsenlogo.png" alt="Linsen Logo" className="h-10 w-auto object-contain" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}} />
+                   <div className="text-2xl font-bold text-blue-900 tracking-tight">Linsen</div>
+                </div>
+                <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
+                  <div className="hidden md:flex gap-6">
+                    <a href="#" className="hover:text-blue-800">Explore Mentors</a>
+                    <a href="#" className="hover:text-blue-800">For Professionals</a>
+                  </div>
+                  <Button variant="outline" className="!py-2 !px-4 hover:!bg-blue-50" onClick={() => setShowSignUpModal(true)}>
+                    Sign Up
+                  </Button>
+                </div>
+              </nav>
+
+              <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto pb-48">
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-8 animate-fade-in-up border border-blue-100">
+                  <Coffee size={14} className="mr-2" />
+                  Coffee chats that launch careers
+                </div>
+                <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-8 leading-tight tracking-tight">
+                  Get advice from the <br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-800">
+                    people on the inside.
+                  </span>
+                </h1>
+                <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+                  Don't guess what companies are looking for. Book a paid consultation with professionals actually working in your dream role.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                  <button onClick={() => handleLogin('candidate')} className="group relative flex items-center justify-center px-8 py-4 bg-slate-900 text-white rounded-xl text-lg font-semibold hover:bg-slate-800 transition-all hover:-translate-y-1 hover:shadow-xl">
+                    <Search className="mr-3 group-hover:text-blue-300 transition-colors" size={24} />
+                    Find a Mentor
+                    <span className="absolute -top-3 -right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transform rotate-12">Popular</span>
+                  </button>
+                  <button onClick={() => handleLogin('professional')} className="group flex items-center justify-center px-8 py-4 bg-white text-slate-900 border-2 border-slate-100 rounded-xl text-lg font-semibold hover:border-blue-100 hover:bg-blue-50 transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <Briefcase className="mr-3 text-slate-400 group-hover:text-blue-700 transition-colors" size={24} />
+                    Log in as Professional
+                  </button>
+                </div>
+
+                <div className="mt-16 flex flex-col items-center gap-4 text-slate-400 opacity-70">
+                   <p className="text-sm font-medium uppercase tracking-widest">Experts from top companies</p>
+                   <div className="flex gap-8 grayscale">
+                      <span className="font-bold text-xl">Google</span>
+                      <span className="font-bold text-xl">Spotify</span>
+                      <span className="font-bold text-xl">LEGO</span>
+                      <span className="font-bold text-xl">Novo Nordisk</span>
+                   </div>
+                </div>
+              </main>
+            </div>
+          );
+
+          const CandidateBrowseView = () => (
+            <div className="min-h-screen bg-slate-50">
+              <Header />
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-slate-900">Find your Insider</h2>
+                  <p className="text-slate-500 mt-1">Book a coffee chat with professionals to get portfolio feedback or career advice.</p>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4 items-center">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input type="text" placeholder="Search by company (e.g. Spotify), role, or name..." className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow" />
+                  </div>
+                  <div className="flex gap-2 w-full md:w-auto">
+                     <Button variant="secondary" icon={Filter}>Filters</Button>
+                     <Button variant="secondary" icon={MapPin}>Location</Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {MOCK_PROFESSIONALS.map(pro => (
+                    <Card key={pro.id} className="flex flex-col h-full hover:ring-2 hover:ring-blue-500/20 transition-all group">
+                      <div className="p-6 flex-1">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex gap-3">
+                            <img src={pro.avatar} alt={pro.name} className="w-12 h-12 rounded-full bg-gray-100 border-2 border-white shadow-sm" />
+                            <div>
+                              <h3 className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors">{pro.name}</h3>
+                              <div className="flex items-center gap-1 text-sm text-slate-600 font-medium"><Building2 size={12} />{pro.role} at {pro.company}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded text-amber-700 text-xs font-bold border border-amber-100">
+                            <Star size={12} fill="currentColor" />{pro.rating}
+                          </div>
+                        </div>
+                        <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">{pro.bio}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {pro.skills.map(skill => (
+                            <span key={skill} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md font-medium">{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl flex items-center justify-between">
+                        <div>
+                          <span className="text-lg font-bold text-slate-900">${pro.rate}</span>
+                          <span className="text-slate-500 text-xs">/session</span>
+                        </div>
+                        <Button onClick={() => setSelectedProfessional(pro)} variant="primary" className="!py-2 !px-4 !text-sm shadow-blue-200">Book Coffee Chat</Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </main>
+            </div>
+          );
+
+          const ProfessionalDashboardView = () => (
+            <div className="min-h-screen bg-slate-50">
+              <Header />
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Mentorship Dashboard</h2>
+                    <p className="text-slate-500 mt-1">Manage your incoming coffee chat requests.</p>
+                  </div>
+                  <div className="bg-blue-50 text-blue-800 border border-blue-100 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+                     <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                     Accepting new mentees
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                   <Card className="p-6 border-l-4 border-l-blue-700">
+                      <div className="text-slate-500 text-sm font-medium mb-1">Total Earned</div>
+                      <div className="text-3xl font-bold text-slate-900">$2,450</div>
+                   </Card>
+                   <Card className="p-6 border-l-4 border-l-amber-500">
+                      <div className="text-slate-500 text-sm font-medium mb-1">Pending Requests</div>
+                      <div className="text-3xl font-bold text-slate-900">{requests.filter(r => r.status === 'pending').length}</div>
+                   </Card>
+                   <Card className="p-6 border-l-4 border-l-indigo-500">
+                      <div className="text-slate-500 text-sm font-medium mb-1">Sessions Completed</div>
+                      <div className="text-3xl font-bold text-slate-900">24</div>
+                   </Card>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <h3 className="font-bold text-slate-800">Booking Requests</h3>
+                    <Button variant="ghost" className="!p-1 !text-sm">History</Button>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {requests.length === 0 ? (
+                      <div className="p-12 text-center text-gray-400">
+                        <Calendar size={48} className="mx-auto mb-4 opacity-20" />
+                        <p>No pending requests.</p>
+                      </div>
+                    ) : (
+                      requests.map(request => (
+                        <div key={request.id} className="p-6 hover:bg-slate-50 transition-colors">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-start gap-4">
+                              <img src={request.candidateAvatar} alt={request.candidateName} className="w-12 h-12 rounded-full border border-white shadow-sm bg-gray-100" />
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-bold text-slate-900">{request.candidateName}</h4>
+                                  <span className="text-xs text-slate-500 px-2 py-0.5 bg-slate-100 rounded-full">{request.targetRole} Hopeful</span>
+                                  <Badge status={request.status} />
+                                </div>
+                                <p className="text-sm text-slate-600 mb-2 max-w-xl">{request.message}</p>
+                                <div className="flex items-center gap-4 text-sm text-slate-500">
+                                  <div className="flex items-center gap-1"><Calendar size={14} />{request.date}</div>
+                                  <div className="flex items-center gap-1"><Clock size={14} />{request.time}</div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 md:ml-auto">
+                              {request.status === 'pending' && (
+                                <>
+                                  <Button variant="secondary" onClick={() => openRescheduleModal(request)} className="!py-2 !text-sm">Reschedule</Button>
+                                  <Button variant="primary" onClick={() => handleAcceptRequest(request.id)} className="!py-2 !text-sm bg-blue-700 hover:bg-blue-800 focus:ring-blue-600" icon={CheckCircle}>Accept</Button>
+                                </>
+                              )}
+                              {request.status === 'accepted' && (
+                                 <div className="text-sm text-slate-500 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div>Scheduled</div>
+                              )}
+                               {request.status === 'rescheduling' && (
+                                 <div className="text-sm text-slate-500 italic">Waiting for candidate...</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </main>
+            </div>
+          );
+
+          const Header = () => (
+            <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('landing')}>
+                   <img src="Linsenlogo.png" alt="Linsen" className="h-8 w-auto object-contain" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}} />
+                   <div className="text-xl font-bold text-blue-900">Linsen</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex flex-col items-end mr-2">
+                    <span className="text-sm font-bold text-slate-900">{userRole === 'professional' ? 'Edo Linari' : 'Morten Haulik'}</span>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider">{userRole === 'professional' ? 'Professional (Mentor)' : 'Job Seeker'}</span>
+                  </div>
+                  <div className="h-9 w-9 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
+                     <img src={userRole === 'professional' ? AVATAR_EDO : AVATAR_MORTEN} alt="User" />
+                  </div>
+                  <button onClick={handleLogout} className="text-slate-400 hover:text-red-600 transition-colors p-2" title="Log Out"><LogOut size={20} /></button>
+                </div>
+              </div>
+            </header>
+          );
+
+          // MODALS
+          const SignUpModal = () => {
+            if (!showSignUpModal) return null;
+            return (
+              <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+                <div className="flex items-center justify-center min-h-screen px-4">
+                  <div className="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity backdrop-blur-sm" onClick={() => setShowSignUpModal(false)}></div>
+                  <div className="relative bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl z-10 animate-fade-in-up">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-bold text-slate-900">Join Linsen</h3>
+                      <button onClick={() => setShowSignUpModal(false)} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
+                    </div>
+                    <div className="space-y-4 mb-6">
+                      <div className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${signUpRole === 'candidate' ? 'border-blue-700 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`} onClick={() => setSignUpRole('candidate')}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${signUpRole === 'candidate' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'}`}><Search size={20} /></div>
+                          <div><div className="font-bold text-slate-900">I'm looking for a job</div><div className="text-sm text-slate-500">I want to book mentors for advice.</div></div>
+                        </div>
+                      </div>
+                      <div className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${signUpRole === 'professional' ? 'border-blue-700 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`} onClick={() => setSignUpRole('professional')}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${signUpRole === 'professional' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400'}`}><Briefcase size={20} /></div>
+                          <div><div className="font-bold text-slate-900">I'm a Professional</div><div className="text-sm text-slate-500">I want to mentor and earn money.</div></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <input type="text" placeholder="Full Name" className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input type="email" placeholder="Email Address" className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input type="password" placeholder="Password" className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <Button className="w-full mt-6" onClick={handleSignUp}>Create Account</Button>
+                    <p className="text-center text-xs text-gray-500 mt-4">By joining, you agree to our Terms of Service.</p>
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          const BookingModal = () => {
+            if (!selectedProfessional && !showBookingModal) return null;
+            if (!selectedProfessional) return null;
+            return (
+              <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                  <div className="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onClick={() => setSelectedProfessional(null)}></div>
+                  <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                  <div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+                    <div className="absolute top-4 right-4 z-10"><button type="button" className="bg-white rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors" onClick={() => setSelectedProfessional(null)}><X size={20} /></button></div>
+                    <div className="flex flex-col sm:flex-row">
+                       <div className="bg-slate-50 p-6 sm:w-1/3 border-r border-slate-100 flex flex-col items-center text-center">
+                          <img src={selectedProfessional.avatar} className="w-24 h-24 rounded-full mb-4 shadow-md bg-white p-1" alt="" />
+                          <h3 className="text-lg font-bold text-slate-900">{selectedProfessional.name}</h3>
+                          <div className="text-sm font-medium text-slate-500 mb-1">{selectedProfessional.role}</div>
+                          <div className="text-sm font-bold text-blue-800 mb-4">{selectedProfessional.company}</div>
+                          <div className="w-full space-y-3 text-left mt-2">
+                            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Rate</span><span className="font-bold text-slate-900">${selectedProfessional.rate}</span></div>
+                            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Location</span><span className="font-medium text-slate-700">{selectedProfessional.location.split(',')[0]}</span></div>
+                          </div>
+                       </div>
+                       <div className="p-6 sm:w-2/3">
+                          {!showBookingModal ? (
+                            <>
+                              <h4 className="text-lg font-bold text-slate-900 mb-2">Mentor Profile</h4>
+                              <p className="text-slate-600 text-sm mb-6 leading-relaxed">{selectedProfessional.bio}</p>
+                              <div className="mb-6"><h4 className="text-sm font-bold text-slate-900 mb-2">Can help with:</h4><div className="flex flex-wrap gap-2">{selectedProfessional.skills.map(s => <span key={s} className="text-xs bg-blue-50 text-blue-800 px-2 py-1 rounded border border-blue-100">{s}</span>)}</div></div>
+                              <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 mb-6 flex gap-3 items-start"><Star className="text-amber-500 shrink-0 mt-0.5" size={16} /><p className="text-xs text-amber-800">"Highly recommended! {selectedProfessional.name} gave me specific feedback that helped me land the interview."</p></div>
+                              <Button onClick={() => setShowBookingModal(true)} className="w-full" variant="primary" icon={Coffee}>Book Coffee Chat</Button>
+                            </>
+                          ) : (
+                            <div className="animate-fade-in">
+                               <h4 className="text-lg font-bold text-slate-900 mb-1">Schedule Meeting</h4>
+                               <p className="text-sm text-slate-500 mb-6">Select a time for your 1:1 video call.</p>
+                               <div className="space-y-4 mb-6">
+                                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Date</label><input type="date" className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2.5 border outline-none" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} /></div>
+                                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Time</label><select className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2.5 border outline-none" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)}><option value="">Select time...</option><option value="09:00">09:00 AM</option><option value="12:00">12:00 PM</option><option value="15:00">03:00 PM</option><option value="17:00">05:00 PM</option></select></div>
+                               </div>
+                               <div className="bg-slate-50 p-4 rounded-lg mb-6">
+                                  <div className="flex justify-between items-center mb-2"><span className="text-sm text-slate-600">Mentorship Fee</span><span className="font-medium text-slate-900">${selectedProfessional.rate}.00</span></div>
+                                  <div className="flex justify-between items-center text-sm text-slate-600"><span>Service Fee</span><span>$5.00</span></div>
+                                  <div className="border-t border-slate-200 mt-2 pt-2 flex justify-between items-center font-bold text-slate-900"><span>Total</span><span>${selectedProfessional.rate + 5}.00</span></div>
+                               </div>
+                               <div className="flex gap-3"><Button variant="secondary" onClick={() => setShowBookingModal(false)} className="flex-1">Back</Button><Button variant="primary" onClick={handleBookMeeting} className="flex-1" icon={DollarSign}>Pay & Confirm</Button></div>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          const RescheduleModal = () => {
+            if (!showRescheduleModal) return null;
+            return (
+              <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                  <div className="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onClick={() => setShowRescheduleModal(false)}></div>
+                  <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                  <div className="relative inline-block align-bottom bg-white rounded-xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full sm:p-6">
+                     <div className="mb-4"><h3 className="text-lg leading-6 font-medium text-slate-900">Propose New Time</h3><p className="text-sm text-slate-500">Suggest a new time for your chat with {activeRequest?.candidateName}.</p></div>
+                     <div className="space-y-4 mb-6">
+                        <div><label className="block text-sm font-medium text-slate-700 mb-1">New Date</label><input type="date" className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border outline-none" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} /></div>
+                        <div><label className="block text-sm font-medium text-slate-700 mb-1">New Time</label><input type="time" className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border outline-none" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} /></div>
+                     </div>
+                     <div className="flex justify-end gap-3"><Button variant="ghost" onClick={() => setShowRescheduleModal(false)}>Cancel</Button><Button variant="primary" onClick={handleSubmitReschedule}>Send Proposal</Button></div>
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          const Toast = () => {
+            if (!toast) return null;
+            return (
+              <div className="fixed bottom-4 right-4 z-50 animate-fade-in-up">
+                <div className={`rounded-lg shadow-lg p-4 text-white flex items-center gap-3 ${toast.type === 'error' ? 'bg-red-600' : 'bg-blue-800'}`}>
+                   {toast.type === 'error' ? <XCircle size={20}/> : <CheckCircle size={20} />}
+                   <span className="font-medium">{toast.message}</span>
+                </div>
+              </div>
+            );
+          };
+
+          return (
+            <div className="font-sans text-slate-900 bg-white min-h-screen">
+              {view === 'landing' && <LandingView />}
+              {view === 'candidate-browse' && <CandidateBrowseView />}
+              {view === 'professional-dashboard' && <ProfessionalDashboardView />}
+              <BookingModal />
+              <RescheduleModal />
+              <SignUpModal />
+              <Toast />
+            </div>
+          );
+        }
+
+        // --- MOUNT THE APP ---
+        const rootElement = document.getElementById('root');
+        const root = createRoot(rootElement);
+        root.render(<App />);
+    </script>
+</body>
+</html>
